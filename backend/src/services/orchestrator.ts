@@ -6,6 +6,7 @@ import { generateScript } from './scriptGenerator';
 import { makeCall, generateAudio } from './voiceCall';
 import { sendWhatsAppVoiceMessage } from './whatsappService';
 import { sendPostCallSummary } from './resendService';
+import { matchPersona } from './agentService';
 import { ParsedEmail } from './emailListener';
 
 // Broadcast function — set by index.ts
@@ -46,7 +47,11 @@ export async function processEmail(campaignId: string, emailData: ParsedEmail): 
     await db.run(`UPDATE emails SET status = 'processed' WHERE id = $1`, [emailId]);
 
     emit('contact_extracted', { contactId, emailId, ...contact });
-    console.log(`[Orchestrator] Contact extracted: ${contact.name}, ${contact.phone}`);
+    console.log(`[Orchestrator] Contact extracted: ${contact.name}, ${contact.phone}, seniority=${contact.seniority}`);
+
+    // Match persona to contact's role (auto-detects c_suite/engineering/claims/etc.)
+    const persona = await matchPersona(contact.role);
+    console.log(`[Orchestrator] Persona matched: ${persona.name} (slug: ${persona.slug})`);
 
     // Check if we have a phone number — if not, mark as failed
     if (!contact.phone) {
@@ -56,7 +61,7 @@ export async function processEmail(campaignId: string, emailData: ParsedEmail): 
       return;
     }
 
-    // 3. Generate script
+    // 3. Generate script (with persona-aware tone)
     const scriptContent = await generateScript(
       {
         contactName: contact.name || emailData.fromName,
@@ -65,16 +70,17 @@ export async function processEmail(campaignId: string, emailData: ParsedEmail): 
         campaignName: campaign?.name || 'Demo',
         campaignAudience: campaign?.audience || 'prospects'
       },
-      campaign?.voice_style || 'professional'
+      campaign?.voice_style || 'professional',
+      persona
     );
 
     const scriptId = uuid();
     await db.run(`
-      INSERT INTO scripts (id, contact_id, campaign_id, content)
-      VALUES ($1, $2, $3, $4)
-    `, [scriptId, contactId, campaignId, scriptContent]);
+      INSERT INTO scripts (id, contact_id, campaign_id, content, agent_id, persona_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [scriptId, contactId, campaignId, scriptContent, 'script_generator', persona.id]);
 
-    console.log(`[Orchestrator] Script generated (${scriptContent.length} chars)`);
+    console.log(`[Orchestrator] Script generated (${scriptContent.length} chars, persona: ${persona.slug})`);
 
     // 3.5. Generate TTS audio and send via WhatsApp
     const callId = uuid();

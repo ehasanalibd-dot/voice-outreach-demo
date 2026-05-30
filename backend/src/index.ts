@@ -13,6 +13,8 @@ import emailsRouter from './routes/emails';
 import callsRouter from './routes/calls';
 import dashboardRouter from './routes/dashboard';
 import webhooksRouter from './routes/webhooks';
+import agentsRouter from './routes/agents';
+import personasRouter from './routes/personas';
 import { setBroadcast } from './services/orchestrator';
 import { pollInbox } from './services/emailListener';
 import { processEmail } from './services/orchestrator';
@@ -63,6 +65,8 @@ app.use('/api/emails', emailsRouter);
 app.use('/api/calls', callsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/webhooks/resend', webhooksRouter);
+app.use('/api/agents', agentsRouter);
+app.use('/api/personas', personasRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
