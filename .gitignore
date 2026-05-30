@@ -49,3 +49,7 @@ coverage/
 
 # TypeScript cache
 *.tsbuildinfo
+
+backend/audio/
+
+backend/data/
