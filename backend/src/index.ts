@@ -15,13 +15,16 @@ import dashboardRouter from './routes/dashboard';
 import webhooksRouter from './routes/webhooks';
 import agentsRouter from './routes/agents';
 import personasRouter from './routes/personas';
+import twilioRouter from './routes/twilio';
+import conversationsRouter from './routes/conversations';
+import analyticsRouter from './routes/analytics';
 import { setBroadcast } from './services/orchestrator';
 import { pollInbox } from './services/emailListener';
 import { processEmail } from './services/orchestrator';
 
 const app = express();
 const server = http.createServer(app);
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '4001');
 
 // Middleware
 app.use(cors());
@@ -65,8 +68,11 @@ app.use('/api/emails', emailsRouter);
 app.use('/api/calls', callsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/webhooks/resend', webhooksRouter);
+app.use('/api/webhooks/twilio', twilioRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/conversations', conversationsRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
@@ -100,6 +106,11 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`\n🎙️  Voice Outreach Demo API running on http://localhost:${PORT}`);
   console.log(`📊 Dashboard API: http://localhost:${PORT}/api/dashboard`);
-  console.log(`📧 Mock email:    POST http://localhost:${PORT}/api/emails/mock`);
-  console.log(`🔌 WebSocket:     ws://localhost:${PORT}/ws\n`);
+  console.log(`🤖 Agents API: http://localhost:${PORT}/api/agents`);
+  console.log(`👤 Personas API: http://localhost:${PORT}/api/personas`);
+  console.log(`💬 Conversations API: http://localhost:${PORT}/api/conversations`);
+  console.log(`📈 Analytics API: http://localhost:${PORT}/api/analytics`);
+  console.log(`📧 Mock email: POST http://localhost:${PORT}/api/emails/mock`);
+  console.log(`📱 Twilio webhook: POST http://localhost:${PORT}/api/webhooks/twilio`);
+  console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws\n`);
 });

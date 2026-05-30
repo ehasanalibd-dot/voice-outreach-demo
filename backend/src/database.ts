@@ -147,6 +147,27 @@ export async function initDatabase(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     );
 
+    -- Prompt versioning for A/B testing
+    CREATE TABLE IF NOT EXISTS prompt_versions (
+      id TEXT PRIMARY KEY,
+      agent_slug TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      system_prompt TEXT NOT NULL,
+      model TEXT,
+      temperature REAL,
+      max_tokens INTEGER,
+      is_active BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_pv_agent ON prompt_versions(agent_slug, version);
+
+    -- A/B testing tracking columns
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS prompt_version_id TEXT;
+    ALTER TABLE scripts ADD COLUMN IF NOT EXISTS ab_group TEXT;
+    
+    -- Campaign persona override
+    ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS persona_override TEXT DEFAULT 'auto';
+
     CREATE INDEX IF NOT EXISTS idx_emails_campaign ON emails(campaign_id);
     CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email_id);
     CREATE INDEX IF NOT EXISTS idx_calls_campaign ON calls(campaign_id);

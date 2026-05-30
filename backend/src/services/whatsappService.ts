@@ -94,6 +94,37 @@ export async function sendWhatsAppVoiceMessage(
  * Convert local audio file path to a publicly accessible URL
  * The backend serves /audio/* files, so we construct the URL
  */
+/**
+ * Send a plain text WhatsApp message (for reply agent)
+ */
+export async function sendWhatsAppText(
+  toPhone: string,
+  message: string
+): Promise<{ sid: string | null; status: 'sent' | 'failed' }> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
+    console.log('[WhatsApp] No Twilio credentials — mock mode (text)');
+    return { sid: null, status: 'sent' };
+  }
+
+  try {
+    const from = `whatsapp:${TWILIO_WHATSAPP_NUMBER}`;
+    const to = `whatsapp:${toPhone}`;
+    
+    const response = await axios.post(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      new URLSearchParams({ From: from, To: to, Body: message }),
+      {
+        auth: { username: TWILIO_ACCOUNT_SID, password: TWILIO_AUTH_TOKEN },
+      }
+    );
+    console.log(`[WhatsApp] Text sent to ${toPhone}: SID=${response.data.sid}`);
+    return { sid: response.data.sid, status: 'sent' };
+  } catch (error: any) {
+    console.error('[WhatsApp] Text send error:', error.response?.data || error.message);
+    return { sid: null, status: 'failed' };
+  }
+}
+
 function getAudioUrl(filePath: string): string | null {
   try {
     const filename = path.basename(filePath);
