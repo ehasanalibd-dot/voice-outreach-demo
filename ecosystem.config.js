@@ -8,22 +8,33 @@ module.exports = {
       env: {
         NODE_ENV: "production",
       },
-      // Auto-restart on crash
       autorestart: true,
       max_restarts: 10,
       restart_delay: 3000,
-      
-      // Watch for code changes (dev mode)
       watch: false,
-      
-      // Logging
       log_date_format: "YYYY-MM-DD HH:mm:ss",
       error_file: "/var/log/ava-backend-error.log",
       out_file: "/var/log/ava-backend-out.log",
       merge_logs: true,
-      
-      // Memory limit (restart if >512MB)
       max_memory_restart: "512M",
+    },
+    {
+      name: "ava-frontend",
+      script: "npm",
+      args: "start",
+      cwd: "/root/projects/voice-outreach-demo/frontend",
+      env: {
+        NODE_ENV: "production",
+        PORT: 3000,
+      },
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 3000,
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      error_file: "/var/log/ava-frontend-error.log",
+      out_file: "/var/log/ava-frontend-out.log",
+      merge_logs: true,
+      max_memory_restart: "256M",
     },
   ],
 };
